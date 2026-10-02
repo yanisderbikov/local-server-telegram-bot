@@ -1,0 +1,23 @@
+name: telegram-local-api
+services:
+  telegram-bot-api:
+    build:
+      context: .
+      args:
+        TELEGRAM_BOT_API_REF: ${TELEGRAM_BOT_API_REF:-e3e9dd8e5b3d7ab8537cd5a10dc31d5ffa8f82d1}
+        BUILD_JOBS: ${BUILD_JOBS:-2}
+    image: ${LOCAL_BOT_IMAGE:-local-server-telegram-bot:local}
+    env_file: .env
+    restart: unless-stopped
+    ports:
+      - "${TELEGRAM_BIND_ADDRESS:-127.0.0.1}:${TELEGRAM_HTTP_PORT:-8081}:${TELEGRAM_HTTP_PORT:-8081}"
+    volumes:
+      - telegram_data:/var/lib/telegram-bot-api
+    stop_grace_period: 1m
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sS --max-time 3 -o /dev/null http://127.0.0.1:$$TELEGRAM_HTTP_PORT/"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+volumes:
+  telegram_data:
