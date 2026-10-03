@@ -12,14 +12,15 @@ RUN cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/opt/t
     && cmake --build build --target install --parallel "$BUILD_JOBS"
 
 FROM debian:bookworm-slim
-RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates libssl3 zlib1g libstdc++6 curl \
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates libssl3 zlib1g libstdc++6 curl nginx \
     && rm -rf /var/lib/apt/lists/* \
     && groupadd --gid 10001 bot && useradd --uid 10001 --gid bot --create-home bot \
     && mkdir -p /var/lib/telegram-bot-api/temp && chown -R bot:bot /var/lib/telegram-bot-api
 COPY --from=build /opt/telegram/bin/telegram-bot-api /usr/local/bin/telegram-bot-api
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 USER 10001:10001
-ENV TELEGRAM_HTTP_PORT=8081 TELEGRAM_DATA_DIR=/var/lib/telegram-bot-api TELEGRAM_TEMP_DIR=/var/lib/telegram-bot-api/temp TELEGRAM_VERBOSITY=1
-EXPOSE 8081
+ENV TELEGRAM_HTTP_PORT=8081 TELEGRAM_DATA_DIR=/var/lib/telegram-bot-api TELEGRAM_TEMP_DIR=/var/lib/telegram-bot-api/temp TELEGRAM_VERBOSITY=1 \
+    TELEGRAM_HTTP_IP_ADDRESS=0.0.0.0 FILE_SERVER_PORT=8082
+EXPOSE 8081 8082
 STOPSIGNAL SIGTERM
-ENTRYPOINT ["sh", "/usr/local/bin/entrypoint.sh"]
+ENTRYPOINT ["bash", "/usr/local/bin/entrypoint.sh"]
