@@ -20,9 +20,14 @@ if [ -z "${FILE_SERVER_TOKEN:-}" ]; then exec "${api[@]}"; fi
 
 if [[ "$TELEGRAM_HTTP_IP_ADDRESS" == *:* ]]; then listen="[::]:$FILE_SERVER_PORT ipv6only=off"
 else listen="$TELEGRAM_HTTP_IP_ADDRESS:$FILE_SERVER_PORT"; fi
+# As root (e.g. RAILWAY_RUN_UID=0) workers would drop to nobody and could not read
+# the API's private files, so keep them under the same user as telegram-bot-api.
+user_directive=""
+if [ "$(id -u)" = 0 ]; then user_directive="user root;"; fi
 conf=/tmp/nginx/nginx.conf
 mkdir -p /tmp/nginx
 cat > "$conf" <<NGINX
+$user_directive
 worker_processes 1;
 pid /tmp/nginx/nginx.pid;
 error_log stderr warn;
